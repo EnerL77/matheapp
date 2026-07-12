@@ -1,40 +1,17 @@
-import express from 'express';
-import cors from 'cors';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import OpenAI from 'openai';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-const app = express();
-const PORT = process.env.PORT || 3002;
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// CORS: lokal alle Ursprünge erlauben, auf Render nur das Frontend
-const allowedOrigins = process.env.NODE_ENV === 'production'
-  ? [process.env.FRONTEND_URL || ''].filter(Boolean)
-  : ['http://localhost:5173', 'http://localhost:3000'];
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.length === 0) return callback(null, true);
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('CORS nicht erlaubt'));
-  },
-}));
-
-app.use(express.json());
-
-// Health Check
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// Aufgabe generieren
-app.post('/api/generate-exercise', async (req, res) => {
-  const { topicName, grade, difficulty } = req.body;
+  const { topicName, grade, difficulty } = req.body ?? {};
 
   if (!topicName || !grade || !difficulty) {
     return res.status(400).json({ error: 'topicName, grade und difficulty sind erforderlich' });
@@ -81,12 +58,12 @@ Die falschen Antworten sollen plausibel aber klar falsch sein.`;
     }
 
     const exercise = JSON.parse(jsonMatch[0]);
-    return res.json(exercise);
+    return res.status(200).json(exercise);
 
   } catch (err) {
     console.error('Fehler bei Aufgabengenerierung:', err);
     // Fallback-Aufgabe
-    return res.json({
+    return res.status(200).json({
       question: 'Was ist 7 + 5?',
       options: ['10', '11', '12', '13'],
       correctIndex: 2,
@@ -94,8 +71,4 @@ Die falschen Antworten sollen plausibel aber klar falsch sein.`;
       hint: 'Zähle mit den Fingern weiter!',
     });
   }
-});
-
-app.listen(PORT, () => {
-  console.log(`Backend läuft auf http://localhost:${PORT}`);
-});
+}

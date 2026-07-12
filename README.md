@@ -11,8 +11,8 @@ zeigt den Lernfortschritt und erlaubt das Zurücksetzen.
 ```
 mathe-app/
   frontend/   React + Vite + TypeScript (UI)
-  backend/    Express.js API-Proxy zur OpenAI API
-  render.yaml Render Deployment-Konfiguration (Static Site + Web Service)
+  api/        Vercel Serverless Function - Proxy zur OpenAI API
+  vercel.json Vercel Deployment-Konfiguration (Build + Output-Verzeichnis)
 ```
 
 ## Lokale Entwicklung
@@ -23,42 +23,40 @@ mathe-app/
 npm run install:all
 ```
 
-### 2. Backend konfigurieren
+### 2. Umgebungsvariable konfigurieren
 
 ```bash
-cp backend/.env.example backend/.env
+cp .env.example .env
 ```
 
-Trage in `backend/.env` deinen `OPENAI_API_KEY` ein.
+Trage in `.env` deinen `OPENAI_API_KEY` ein.
 
-### 3. Beide Server starten
+### 3. Dev-Server starten
 
 ```bash
 npm run dev
 ```
 
-- Frontend: http://localhost:5173 (Vite, proxyt `/api/*` zu Backend)
-- Backend: http://localhost:3002
+Das startet `vercel dev` (Vercel CLI, ggf. `npm i -g vercel` bzw. einmalig
+`vercel login`). Frontend und `/api/*`-Function laufen dabei zusammen auf
+http://localhost:3000, kein separater Proxy nötig.
 
-## Deployment (GitHub + Render)
+## Deployment (GitHub + Vercel)
 
 1. Repository auf GitHub pushen.
-2. In Render ein neues **Blueprint** anlegen und das Repo auswählen –
-   `render.yaml` legt automatisch zwei Services an:
-   - `mathe-app-backend` (Web Service, Node)
-   - `mathe-app-frontend` (Static Site)
-3. Für `mathe-app-backend` die Umgebungsvariable `OPENAI_API_KEY` setzen
-   (Render fragt danach, da `sync: false`).
-4. Für `mathe-app-backend` die Umgebungsvariable `FRONTEND_URL` auf die
-   URL der Frontend-Static-Site setzen (z. B.
-   `https://mathe-app-frontend.onrender.com`), damit CORS funktioniert.
-5. Render baut und deployed beide Services automatisch. Das Frontend
-   erhält `VITE_API_URL` automatisch vom Backend-Service (Hostname).
+2. Auf [vercel.com](https://vercel.com) ein neues Projekt anlegen und das
+   Repo `EnerL77/matheapp` importieren. `vercel.json` sorgt dafür, dass
+   das Frontend gebaut (`frontend/dist`) und `api/generate-exercise.ts`
+   automatisch als Serverless Function bereitgestellt wird.
+3. Im Vercel-Projekt unter **Settings → Environment Variables** die
+   Variable `OPENAI_API_KEY` setzen (Production, Preview und Development).
+4. Deploy anstoßen - Frontend und API laufen danach auf derselben Domain,
+   kein CORS-Setup nötig.
 
 ## Progressive Web App
 
 Die App lässt sich installieren, sobald sie über HTTPS ausgeliefert wird
-(z. B. über die Render-Deployment-URL). Das Frontend enthält Manifest,
+(z. B. über die Vercel-Deployment-URL). Das Frontend enthält Manifest,
 Icons und einen Service Worker (`vite-plugin-pwa`), der die App-Shell
 offline verfügbar macht und Updates automatisch nachlädt. Die von der
 OpenAI API gelieferten Aufgaben werden bewusst **nicht** gecacht
@@ -77,4 +75,4 @@ OpenAI API gelieferten Aufgaben werden bewusst **nicht** gecacht
 - XP, Level, Tages-Streak, Münzen, Abzeichen
 - Profilansicht mit Fortschritt pro Thema
 - Elternbereich mit Gesamtübersicht und Reset-Funktion
-- Fallback-Aufgabe im Backend, falls die KI-Antwort fehlschlägt
+- Fallback-Aufgabe in der API-Function, falls die KI-Antwort fehlschlägt

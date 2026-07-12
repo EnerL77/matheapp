@@ -1,10 +1,8 @@
 import { Exercise, Grade, Topic, Difficulty } from '../types';
 
-// Im Dev-Modus: /api wird durch Vite-Proxy zu localhost:3002 weitergeleitet
-// In Produktion: VITE_API_URL zeigt auf den Render-Backend-Service
-const API_BASE = import.meta.env.VITE_API_URL
-  ? `https://${import.meta.env.VITE_API_URL}`
-  : '';
+// Frontend und /api-Functions laufen auf derselben Vercel-Domain,
+// daher reicht ein relativer Pfad - sowohl lokal (vercel dev) als auch in Produktion.
+const API_BASE = '';
 
 export async function generateExercise(
   topic: Topic,

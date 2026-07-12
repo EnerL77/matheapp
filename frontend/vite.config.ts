@@ -36,13 +36,4 @@ export default defineConfig({
       },
     }),
   ],
-  server: {
-    proxy: {
-      // Im Dev-Modus: alle /api Anfragen an das lokale Backend weiterleiten
-      '/api': {
-        target: 'http://localhost:3002',
-        changeOrigin: true,
-      },
-    },
-  },
 });
