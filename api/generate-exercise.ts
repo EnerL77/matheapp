@@ -5,6 +5,29 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+interface RawExercise {
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation: string;
+  hint?: string;
+}
+
+// Das Modell platziert die richtige Antwort beim Generieren überproportional oft
+// an derselben Stelle (meist zuerst) - Optionen deshalb serverseitig mischen.
+function shuffleOptions(exercise: RawExercise): RawExercise {
+  const order = exercise.options.map((_, i) => i);
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return {
+    ...exercise,
+    options: order.map(i => exercise.options[i]),
+    correctIndex: order.indexOf(exercise.correctIndex),
+  };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -57,18 +80,18 @@ Die falschen Antworten sollen plausibel aber klar falsch sein.`;
       throw new Error('Kein gültiges JSON in der Antwort');
     }
 
-    const exercise = JSON.parse(jsonMatch[0]);
-    return res.status(200).json(exercise);
+    const exercise: RawExercise = JSON.parse(jsonMatch[0]);
+    return res.status(200).json(shuffleOptions(exercise));
 
   } catch (err) {
     console.error('Fehler bei Aufgabengenerierung:', err);
     // Fallback-Aufgabe
-    return res.status(200).json({
+    return res.status(200).json(shuffleOptions({
       question: 'Was ist 7 + 5?',
       options: ['10', '11', '12', '13'],
       correctIndex: 2,
       explanation: '7 + 5 = 12. Zähle von 7 noch 5 weiter: 8, 9, 10, 11, 12.',
       hint: 'Zähle mit den Fingern weiter!',
-    });
+    }));
   }
 }

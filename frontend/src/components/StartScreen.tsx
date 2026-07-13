@@ -17,8 +17,18 @@ const GRADES: { grade: Grade; emoji: string; color: string }[] = [
 export default function StartScreen({ onSelectGrade, onOpenParentView }: StartScreenProps) {
   return (
     <div className="screen start-screen">
+      <div className="retro-stars" aria-hidden="true">
+        <span className="retro-star">✦</span>
+        <span className="retro-star">✧</span>
+        <span className="retro-star">✦</span>
+        <span className="retro-star">✧</span>
+        <span className="retro-star">✦</span>
+        <span className="retro-star">✧</span>
+        <span className="retro-star">✦</span>
+        <span className="retro-star">✧</span>
+      </div>
       <div className="mascot">🧮</div>
-      <h1 className="app-title">Davids Mathe App</h1>
+      <h1 className="app-title app-title--retro">Davids Mathe App</h1>
       <p className="app-subtitle">Wähle deine Klasse und starte das Abenteuer!</p>
 
       <div className="grade-grid">
